@@ -1,0 +1,6 @@
+lex.yy.c
+y.tab.c
+lex.yy.o
+y.tab.o
+command.o
+shell
