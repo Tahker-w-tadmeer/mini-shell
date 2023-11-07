@@ -1,6 +1,11 @@
 lex.yy.c
 y.tab.c
-lex.yy.o
-y.tab.o
-command.o
+*.o
 shell
+
+examples/cat_grep
+examples/cat_grep_output
+examples/ls_output
+examples/cat_grep.dSYM
+examples/cat_grep_output.dSYM
+examples/ls_output.dSYM

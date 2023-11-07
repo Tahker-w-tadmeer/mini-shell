@@ -2,20 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
+#include <wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 const char * usage = ""
 "Usage:\n"
-"    cat_grep file-name word \n"
+"    cat_grep_output file-name word outfile\n"
 "\n"
 "    It does something similar to the shell command:\n"
-"        csh> cat file | grep word \n"
+"        csh> cat file | grep word > outfile\n"
 "\n"
 "Example:\n"
-"    cat_grep filename keyword \n";
+"    cat_grep_output filename keyword outputfile\n"
+"    cat outputfile\n\n";
 
 const char *cat = "cat";
 const char *grep = "grep";
@@ -23,7 +24,7 @@ const char *grep = "grep";
 int
 main(int argc, char **argv, char **envp)
 {
-	if (argc < 3) {
+	if (argc < 4) {
 		fprintf(stderr, "%s", usage );
 		exit(1);
 	}
@@ -32,9 +33,9 @@ main(int argc, char **argv, char **envp)
 	// change them during redirection and we will need to restore them
 	// at the end.
 	// The dup() system call creates a copy of a file descriptor.
-	int defaultin = dup( 0 ); // Default file Descriptor for stdin
-	int defaultout = dup( 1 ); // Default file Descriptor for stdout
-	int defaulterr = dup( 2 ); // Default file Descriptor for stderr
+	int defaultin = dup( 0 );
+	int defaultout = dup( 1 );
+	int defaulterr = dup( 2 );
 
 	//////////////////  cat //////////////////////////
 
@@ -52,13 +53,13 @@ main(int argc, char **argv, char **envp)
 		exit( 2 );
 	}
 
-	// Redirect input (use sdtin)
+	// Redirect input
 	dup2( defaultin, 0 );
 	
-	// Redirect output to pipe (write the output to pipefile[1] instead od stdout)
+	// Redirect output to pipe
 	dup2( fdpipe[ 1 ], 1 );
 
-	// Redirect err (use stderr)
+	// Redirect err
 	dup2( defaulterr, 2 );
 
 	// Create new process for "cat"
@@ -85,21 +86,37 @@ main(int argc, char **argv, char **envp)
 		perror( "cat_grep: exec cat");
 		exit( 2 );
 	}
+
 	//////////////////  grep //////////////////////////
 
 	// Input:    pipe
 	// Output:   outfile
 	// Error:    defaulterr
 
-	// Redirect input for grep feed it with the output of cat which is writen by the child in fdpipe[1] 
-	// so parent should read it from fdpipe[0]
+	// Redirect input.
 	dup2( fdpipe[0], 0);
-	
-	// Redirect Output to the Default (stdout)
-	dup2( defaultout ,1);
-	
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	////////////////// THIS PART IS DIFFERENT FROM THE cat_grep.cc EXAMPLE ///////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Create file descriptor 
+	int outfd = creat( argv[ 3 ], 0666 );
+
+	if ( outfd < 0 ) {
+		perror( "cat_grep: creat outfile" );
+		exit( 2 );
+	}
+	// Redirect output to the created utfile instead off printing to stdout 
+	dup2( outfd, 1 );
+	close( outfd );
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	////////////////// THIS PART IS DIFFERENT FROM THE cat_grep.cc EXAMPLE ///////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+
 	// Redirect err
 	dup2( defaulterr, 2 );
+
 
 	pid = fork();
 	if (pid == -1 ) {

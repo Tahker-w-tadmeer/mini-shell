@@ -17,4 +17,5 @@ ls_output: ls_output.cc
 
 clean:
 	rm -f ls_output cat_grep cat_grep_output *.o
+	rm -rf *.dSYM
 
