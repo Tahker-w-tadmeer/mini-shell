@@ -31,8 +31,19 @@ commands:
 	;
 
 command: simple_command io_redirect_bg
+    | complex_grammer
     ;
 
+complex_grammer:
+    command_and_args separator_list io_redirect io_redirect_bg Newline{
+    printf("   Yacc: Execute complex command\n");
+    Command::_currentCommand.execute();
+    }
+    | command_and_args separator_list io_redirect Newline {
+    printf("   Yacc: Execute complex command\n");
+    Command::_currentCommand.execute();
+    }
+    ;
 simple_command:
 	command_and_args NEWLINE {
 		printf("   Yacc: Execute command\n");
@@ -67,9 +78,14 @@ command_word:
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
+piped_list:
+    piped_list seperator
+    | /* can be empty */
+    ;
 
 separator:
-	PIPE
+	PIPE command_and_args{
+	}
 	| /* can be empty */
 	;
 
@@ -115,6 +131,7 @@ io_redirect:
     |   LESS WORD {
         Command::_currentCommand._inputFile = $2;
     }
+    | /* can be empty */
     ;
 
 %%
