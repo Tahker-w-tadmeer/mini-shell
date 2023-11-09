@@ -1,12 +1,3 @@
-
-/*
- *
- * CS-413 Spring 98
- * shell.l: lexical analyzer for shell
- * You have to extend it.
- *
- */
-
 %{
 
 #include <string.h>
@@ -28,17 +19,20 @@
 		return GREAT;
 	}
 ">>"    {
-        return GREATMORE;
+        return DOUBLEGREAT;
 }
 ">&"    {
         return GREATAND;
+}
+"&"    {
+        return AND;
 }
 "<" 	{
         return LESS;
     }
 
 "|" {
-    return PIPE
+    return PIPE;
 }
 
 [^ \t\n][^ \t\n]*  {

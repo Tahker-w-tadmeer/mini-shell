@@ -1,23 +1,10 @@
-
-/*
- * CS-413 Spring 98
- * shell.y: parser for shell
- *
- * This parser compiles the following grammar:
- *
- *	cmd [arg]* [> filename]
- *
- * you must extend it to understand the complete shell grammar
- *
- */
-
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE GREATAND GREATMORE LESSMORE LESS PIPE
+%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE AND
 
 %union	{
-		char   *string_val;
-	}
+    char *string_val;
+}
 
 %{
 extern "C" 
@@ -42,7 +29,7 @@ commands:
 	;
 
 command: simple_command
-        ;
+;
 
 simple_command:	
 	command_and_args iomodifier_opt NEWLINE {
