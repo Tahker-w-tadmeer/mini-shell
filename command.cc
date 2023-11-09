@@ -123,7 +123,7 @@ void Command::execute() {
     }
 
     // Print contents of Command data structure
-//    print();
+    // print();
 
     if(strcasecmp(_currentSimpleCommand->_arguments[0], "ls") == 0) {
         int id = fork();
@@ -171,6 +171,9 @@ void defineCommand(std::string args[], int argsNumber=0) {
 void defineCommands() {
     std::string args[] = {"ls"};
     defineCommand(args);
+
+    std::string args1[] = {"cat"};
+    defineCommand(args1);
 }
 
 int main() {
