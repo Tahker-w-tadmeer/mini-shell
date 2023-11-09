@@ -27,7 +27,7 @@ goal:
 
 commands:
 	command
-	| commands separator command
+	| commands  command
 	;
 
 command: simple_command io_redirect_bg
@@ -35,11 +35,11 @@ command: simple_command io_redirect_bg
     ;
 
 complex_grammer:
-    command_and_args separator_list io_redirect io_redirect_bg Newline{
+    command_and_args separator_list io_redirect io_redirect_bg NEWLINE{
     printf("   Yacc: Execute complex command\n");
     Command::_currentCommand.execute();
     }
-    | command_and_args separator_list io_redirect Newline {
+    | command_and_args separator_list io_redirect NEWLINE {
     printf("   Yacc: Execute complex command\n");
     Command::_currentCommand.execute();
     }
@@ -78,11 +78,10 @@ command_word:
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
-piped_list:
-    piped_list seperator
+separator_list:
+    separator_list separator
     | /* can be empty */
     ;
-
 separator:
 	PIPE command_and_args{
 	}
@@ -106,30 +105,27 @@ io_list:
 	| /* can be empty */
 	;
 
-separator_list:
-    separator commands {
-        // Add logic here to handle the separator
-    }
-    | /* can be empty */
-    ;
+
 
 io_redirect:
     DOUBLEGREAT WORD {
-        Command::_currentCommand._outFile = $2;
+        printf("   Yacc: redirect stdout and stderr to %s\n", $2);
+        Command::_currentCommand._appendFile = $2;
     }
     |   GREAT WORD {
+        printf("   Yacc: redirect stdout to %s\n", $2);
         Command::_currentCommand._outFile = $2;
     }
+    |   LESS WORD {
+            Command::_currentCommand._inputFile = $2;
+        }
     |   DOUBLEGREATAND WORD {
-        Command::_currentCommand._outFile = $2;
+        Command::_currentCommand._appendFile = $2;
         Command::_currentCommand._errFile = $2;
     }
     |   GREATAND WORD {
         Command::_currentCommand._outFile = $2;
         Command::_currentCommand._errFile = $2;
-    }
-    |   LESS WORD {
-        Command::_currentCommand._inputFile = $2;
     }
     | /* can be empty */
     ;
