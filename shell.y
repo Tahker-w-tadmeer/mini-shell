@@ -7,13 +7,16 @@
 }
 
 %{
-extern "C" 
+extern "C"
+
 {
 	int yylex();
 	void yyerror (char const *s);
 }
 #define yylex yylex
 #include <stdio.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "command.h"
 %}
 
@@ -78,13 +81,6 @@ io_redirect_bg:
 			// Child process.
 			Command::_currentCommand.execute();
 			exit(0);
-		} else {
-			// Parent process.
-			// Add the job to the job table.
-			Job job;
-			job.pid = pid;
-			job.command = Command::_currentCommand;
-			Command::_jobTable.insert(job);
 		}
 	}
 	| /* can be empty */
