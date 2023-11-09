@@ -27,10 +27,22 @@ goal:
 
 commands:
 	command
-	| commands separator command
+	| commands  command
 	;
 
 command: simple_command io_redirect_bg
+    | complex_grammer
+    ;
+
+complex_grammer:
+    command_and_args separator_list io_redirect io_redirect_bg NEWLINE{
+    printf("   Yacc: Execute complex command\n");
+    Command::_currentCommand.execute();
+    }
+    | command_and_args separator_list io_redirect NEWLINE {
+    printf("   Yacc: Execute complex command\n");
+    Command::_currentCommand.execute();
+    }
     ;
 
 simple_command:
@@ -42,16 +54,20 @@ simple_command:
 	| error NEWLINE { yyerrok; }
 	;
 
+
 command_and_args:
 	command_word arg_list {
 		Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
 	;
 
+
 arg_list:
 	arg_list argument
 	| /* can be empty */
 	;
+
+
 
 argument:
 	WORD {
@@ -59,6 +75,7 @@ argument:
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
+
 
 command_word:
 	WORD {
@@ -68,10 +85,20 @@ command_word:
 	}
 	;
 
+
+separator_list:
+    separator_list separator
+    | /* can be empty */
+    ;
+
+
 separator:
-	PIPE
+	PIPE command_and_args{
+	    Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
+	}
 	| /* can be empty */
 	;
+
 
 io_redirect_bg:
 	io_list BG {
@@ -85,25 +112,26 @@ io_redirect_bg:
 	}
 	| /* can be empty */
 	;
+
 io_list:
 	io_list io_redirect
 	| /* can be empty */
 	;
 
-separator_list:
-    separator commands {
-        // Add logic here to handle the separator
-    }
-    | /* can be empty */
-    ;
+
 
 io_redirect:
     DOUBLEGREAT WORD {
+        printf("   Yacc: redirect stdout and stderr to %s\n", $2);
         Command::_currentCommand._outFile = $2;
     }
     |   GREAT WORD {
+        printf("   Yacc: redirect stdout to %s\n", $2);
         Command::_currentCommand._outFile = $2;
     }
+    |   LESS WORD {
+            Command::_currentCommand._inputFile = $2;
+        }
     |   DOUBLEGREATAND WORD {
         Command::_currentCommand._outFile = $2;
         Command::_currentCommand._errFile = $2;
@@ -112,9 +140,11 @@ io_redirect:
         Command::_currentCommand._outFile = $2;
         Command::_currentCommand._errFile = $2;
     }
-    |   LESS WORD {
-        Command::_currentCommand._inputFile = $2;
-    }
+    |   BG{
+         printf("   Yacc: your program run in background\n");
+         Command::_currentCommand._background = true;
+        }
+    | /* can be empty */
     ;
 
 %%

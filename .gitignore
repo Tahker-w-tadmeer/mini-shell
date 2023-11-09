@@ -2,7 +2,7 @@ lex.yy.c
 y.tab.c
 *.o
 shell
-
+.vscode
 examples/cat_grep
 examples/cat_grep_output
 examples/ls_output
