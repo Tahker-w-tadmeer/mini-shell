@@ -72,11 +72,23 @@ separator:
 
 io_redirect_bg:
 	io_list BG {
-		// Handle background execution logic here
+		// Fork the process and run the command in the child process.
+		pid_t pid = fork();
+		if (pid == 0) {
+			// Child process.
+			Command::_currentCommand.execute();
+			exit(0);
+		} else {
+			// Parent process.
+			// Add the job to the job table.
+			Job job;
+			job.pid = pid;
+			job.command = Command::_currentCommand;
+			Command::_jobTable.insert(job);
+		}
 	}
 	| /* can be empty */
 	;
-
 io_list:
 	io_list io_redirect
 	| /* can be empty */
@@ -88,6 +100,7 @@ io_redirect:
 	| LESS WORD
 	| GREATAND WORD
 	;
+
 %%
 
 void
