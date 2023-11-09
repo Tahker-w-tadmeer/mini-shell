@@ -38,7 +38,7 @@
     }
 
 "|" {
-    return pipe
+    return PIPE
 }
 
 [^ \t\n][^ \t\n]*  {
