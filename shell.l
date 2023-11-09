@@ -25,7 +25,7 @@
         return GREATAND;
 }
 "&"    {
-        return AND;
+        return BG;
 }
 "<" 	{
         return LESS;

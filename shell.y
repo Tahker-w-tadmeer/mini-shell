@@ -1,6 +1,6 @@
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE AND
+%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE BG
 
 %union	{
     char *string_val;
@@ -18,32 +18,30 @@ extern "C"
 %}
 
 %%
-
-goal:	
+goal:
 	commands
 	;
 
-commands: 
+commands:
 	command
-	| commands command 
+	| commands separator command
 	;
 
-command: simple_command
-;
+command: simple_command io_redirect_bg
+    ;
 
-simple_command:	
-	command_and_args iomodifier_opt NEWLINE {
+simple_command:
+	command_and_args NEWLINE {
 		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
-	| NEWLINE 
+	| NEWLINE
 	| error NEWLINE { yyerrok; }
 	;
 
 command_and_args:
 	command_word arg_list {
-		Command::_currentCommand.
-			insertSimpleCommand( Command::_currentSimpleCommand );
+		Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
 	;
 
@@ -54,29 +52,42 @@ arg_list:
 
 argument:
 	WORD {
-               printf("   Yacc: insert argument \"%s\"\n", $1);
-
-	       Command::_currentSimpleCommand->insertArgument( $1 );\
+		printf("   Yacc: insert argument \"%s\"\n", $1);
+		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
 
 command_word:
 	WORD {
-               printf("   Yacc: insert command \"%s\"\n", $1);
-	       
-	       Command::_currentSimpleCommand = new SimpleCommand();
-	       Command::_currentSimpleCommand->insertArgument( $1 );
+		printf("   Yacc: insert command \"%s\"\n", $1);
+		Command::_currentSimpleCommand = new SimpleCommand();
+		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
 
-iomodifier_opt:
-	GREAT WORD {
-		printf("   Yacc: insert output \"%s\"\n", $2);
-		Command::_currentCommand._outFile = $2;
-	}
-	| /* can be empty */ 
+separator:
+	PIPE
+	| /* can be empty */
 	;
 
+io_redirect_bg:
+	io_list BG {
+		// Handle background execution logic here
+	}
+	| /* can be empty */
+	;
+
+io_list:
+	io_list io_redirect
+	| /* can be empty */
+	;
+
+io_redirect:
+	GREAT WORD
+	| DOUBLEGREAT WORD
+	| LESS WORD
+	| GREATAND WORD
+	;
 %%
 
 void
