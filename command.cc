@@ -116,6 +116,10 @@ void Command::print() {
 }
 
 void Command::execute() {
+    printf("%s\n", _currentCommand._errFile);
+    printf("%s\n", _currentCommand._inputFile);
+    printf("%s\n", _currentCommand._outFile);
+    printf("%d\n", _currentCommand._background);
     // Don't do anything if there are no simple commands
     if (_numberOfSimpleCommands == 0) {
         prompt();
