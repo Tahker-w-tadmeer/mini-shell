@@ -1,6 +1,6 @@
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE BG
+%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE BG DOUBLEGREATAND
 
 %union	{
     char *string_val;
@@ -90,12 +90,32 @@ io_list:
 	| /* can be empty */
 	;
 
+separator_list:
+    separator commands {
+        // Add logic here to handle the separator
+    }
+    | /* can be empty */
+    ;
+
 io_redirect:
-	GREAT WORD
-	| DOUBLEGREAT WORD
-	| LESS WORD
-	| GREATAND WORD
-	;
+    DOUBLEGREAT WORD {
+        Command::_currentCommand._outFile = $2;
+    }
+    |   GREAT WORD {
+        Command::_currentCommand._outFile = $2;
+    }
+    |   DOUBLEGREATAND WORD {
+        Command::_currentCommand._outFile = $2;
+        Command::_currentCommand._errFile = $2;
+    }
+    |   GREATAND WORD {
+        Command::_currentCommand._outFile = $2;
+        Command::_currentCommand._errFile = $2;
+    }
+    |   LESS WORD {
+        Command::_currentCommand._inputFile = $2;
+    }
+    ;
 
 %%
 
