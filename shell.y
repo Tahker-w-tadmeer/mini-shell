@@ -44,6 +44,7 @@ complex_grammer:
     Command::_currentCommand.execute();
     }
     ;
+
 simple_command:
 	command_and_args NEWLINE {
 		printf("   Yacc: Execute command\n");
@@ -53,16 +54,20 @@ simple_command:
 	| error NEWLINE { yyerrok; }
 	;
 
+
 command_and_args:
 	command_word arg_list {
 		Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
 	;
 
+
 arg_list:
 	arg_list argument
 	| /* can be empty */
 	;
+
+
 
 argument:
 	WORD {
@@ -71,6 +76,7 @@ argument:
 	}
 	;
 
+
 command_word:
 	WORD {
 		printf("   Yacc: insert command \"%s\"\n", $1);
@@ -78,15 +84,21 @@ command_word:
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
+
+
 separator_list:
     separator_list separator
     | /* can be empty */
     ;
+
+
 separator:
 	PIPE command_and_args{
+	    Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
 	| /* can be empty */
 	;
+
 
 io_redirect_bg:
 	io_list BG {
@@ -100,6 +112,7 @@ io_redirect_bg:
 	}
 	| /* can be empty */
 	;
+
 io_list:
 	io_list io_redirect
 	| /* can be empty */

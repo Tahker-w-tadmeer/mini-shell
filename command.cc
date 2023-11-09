@@ -7,6 +7,7 @@
 #include <csignal>
 #include <iostream>
 #include <string>
+#include <sys/fcntl.h>
 
 #include "commands/ls_output.h"
 
@@ -130,27 +131,73 @@ void Command::execute() {
     // Print contents of Command data structure
 //     print();
 
-//    if(strcasecmp(_currentSimpleCommand->_arguments[0], "ls") == 0) {
-//        int id = fork();
-//        if(id == 0) { // If child
-//            ls_execute(_currentSimpleCommand->_numberOfArguments, _currentSimpleCommand->_arguments);
-//            clear();
-//        }
-//    }
-    int default_in = dup(0);
-    int default_out = dup(1);
-    int default_err = dup(2);
-
+//dup returns a new file descriptor that is a copy of the file descriptor passed as argument;
+    int default_in = dup(0);//0 is the file descriptor for stdin
+    int default_out = dup(1);//1 is the file descriptor for stdout
+    int default_err = dup(2);//2 is the file descriptor for stderr
+    int fdin;
+    int fdout;
+    int fderr;
     int pipes[2];
+    //pipe command to pass data between processes it returns two file descriptors also we check it is successful if it returns 0 and error if -1
     if (pipe(pipes) == -1) {
         perror("pipe");
         exit(EXIT_FAILURE);
     }
+    for (int i = 0; i < _numberOfSimpleCommands; ++i) {
+        if (strcasecmp(_simpleCommands[i]->_arguments[0], "exit") == 0) {
+            printf("Good bye!!\n");
+            exit(1);
+        }
+        if (strcasecmp(_simpleCommands[i]->_arguments[0],"cd")==0){
 
-    // Add execution here
-    // For every simple command fork a new process
-    // Setup i/o redirection
-    // and call exec
+        }
+        if (i == 0) {
+            if (_inputFile != nullptr) {
+                fdin = open(_inputFile, O_RDONLY);
+                if (fdin < 0) {
+                    perror("open");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fdin, 0);
+                close(fdin);
+            } else {
+                dup2(default_in, 0);
+            }
+        }
+        if (i == _numberOfSimpleCommands - 1) {
+            if (_outFile != nullptr) {
+                fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fdout < 0) {
+                    perror("open");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fdout, 1);
+                close(fdout);
+            } else {
+                dup2(default_out, 1);
+            }
+            if (_errFile != nullptr) {
+                fderr = open(_errFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fderr < 0) {
+                    perror("open");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fderr, 2);
+                close(fderr);
+            } else {
+                dup2(default_err, 2);
+            }
+        } else {
+            dup2(pipes[1], 1);
+            close(pipes[1]);
+            dup2(pipes[0], 0);
+            close(pipes[0]);
+        }
+
+
+    }
+
 
     // Clear to prepare for next command
     clear();
