@@ -110,7 +110,7 @@ io_list:
 io_redirect:
     DOUBLEGREAT WORD {
         printf("   Yacc: redirect stdout and stderr to %s\n", $2);
-        Command::_currentCommand._appendFile = $2;
+        Command::_currentCommand._outFile = $2;
     }
     |   GREAT WORD {
         printf("   Yacc: redirect stdout to %s\n", $2);
@@ -120,13 +120,17 @@ io_redirect:
             Command::_currentCommand._inputFile = $2;
         }
     |   DOUBLEGREATAND WORD {
-        Command::_currentCommand._appendFile = $2;
+        Command::_currentCommand._outFile = $2;
         Command::_currentCommand._errFile = $2;
     }
     |   GREATAND WORD {
         Command::_currentCommand._outFile = $2;
         Command::_currentCommand._errFile = $2;
     }
+    |   BG{
+         printf("   Yacc: your program run in background\n");
+         Command::_currentCommand._background = true;
+        }
     | /* can be empty */
     ;
 

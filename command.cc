@@ -126,15 +126,25 @@ void Command::execute() {
         return;
     }
 
-    // Print contents of Command data structure
-    // print();
 
-    if(strcasecmp(_currentSimpleCommand->_arguments[0], "ls") == 0) {
-        int id = fork();
-        if(id == 0) { // If child
-            ls_execute(_currentSimpleCommand->_numberOfArguments, _currentSimpleCommand->_arguments);
-            clear();
-        }
+    // Print contents of Command data structure
+//     print();
+
+//    if(strcasecmp(_currentSimpleCommand->_arguments[0], "ls") == 0) {
+//        int id = fork();
+//        if(id == 0) { // If child
+//            ls_execute(_currentSimpleCommand->_numberOfArguments, _currentSimpleCommand->_arguments);
+//            clear();
+//        }
+//    }
+    int default_in = dup(0);
+    int default_out = dup(1);
+    int default_err = dup(2);
+
+    int pipes[2];
+    if (pipe(pipes) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
     }
 
     // Add execution here
@@ -161,10 +171,10 @@ SimpleCommand *Command::_currentSimpleCommand;
 
 int yyparse();
 
-void defineCommand(std::string args[], int argsNumber=0) {
+void defineCommand(std::string args[], int argsNumber = 0) {
     SimpleCommand *command = new SimpleCommand();
-    for(int i=0; i<argsNumber; i++) {
-        char * char_arr = new char[args[i].length() + 1];
+    for (int i = 0; i < argsNumber; i++) {
+        char *char_arr = new char[args[i].length() + 1];
         strcpy(char_arr, args[i].c_str());
         command->insertArgument(char_arr);
     }
