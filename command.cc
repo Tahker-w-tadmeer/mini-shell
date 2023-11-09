@@ -45,9 +45,9 @@ Command::Command() {
     _availableCommands = (std::string *) malloc(_numberOfSimpleCommands * sizeof(std::string));
 
     _numberOfSimpleCommands = 0;
-    _outFile = 0;
-    _inputFile = 0;
-    _errFile = 0;
+    _outFile = nullptr;
+    _inputFile = nullptr;
+    _errFile = nullptr;
     _background = 0;
 }
 
@@ -129,7 +129,7 @@ void Command::execute() {
 
 
     // Print contents of Command data structure
-//     print();
+     print();
 
 //dup returns a new file descriptor that is a copy of the file descriptor passed as argument;
     int default_in = dup(0);//0 is the file descriptor for stdin
@@ -149,21 +149,17 @@ void Command::execute() {
             printf("Good bye!!\n");
             exit(1);
         }
-        if (strcasecmp(_simpleCommands[i]->_arguments[0],"cd")==0){
 
-        }
-        if (i == 0) {
-            if (_inputFile != nullptr) {
-                fdin = open(_inputFile, O_RDONLY);
-                if (fdin < 0) {
-                    perror("open");
-                    exit(EXIT_FAILURE);
-                }
-                dup2(fdin, 0);
-                close(fdin);
-            } else {
-                dup2(default_in, 0);
+        if (_inputFile != nullptr) {
+            fdin = open(_inputFile, O_RDONLY);
+            if (fdin < 0) {
+                perror("open");
+                exit(EXIT_FAILURE);
             }
+            dup2(fdin, 0);
+            close(fdin);
+        } else {
+            dup2(default_in, 0);
         }
         if (i == _numberOfSimpleCommands - 1) {
             if (_outFile != nullptr) {
@@ -194,11 +190,33 @@ void Command::execute() {
             dup2(pipes[0], 0);
             close(pipes[0]);
         }
+        int pid = fork();
+        if (pid == -1) {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+        if(pid==0){
+            if (_outFile!=nullptr)
+                close(fdout);
+            if (_errFile!=nullptr)
+                close(fderr);
+            if (_inputFile!=nullptr)
+                close(fdin);
 
-
+        }
+        close(default_in);
+        close(default_out);
+        close(default_err);
+        execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
+        perror("execvp");
+        exit(EXIT_FAILURE);
     }
-
-
+    dup2(default_in, 0);
+    dup2(default_out, 1);
+    dup2(default_err, 2);
+    close(default_in);
+    close(default_out);
+    close(default_err);
     // Clear to prepare for next command
     clear();
 
