@@ -40,7 +40,6 @@ command: simple_command
 
 simple_command:
 	command_and_args error_opt NEWLINE {
-		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
 	| NEWLINE
@@ -49,7 +48,6 @@ simple_command:
 
 complex_command:
     command_and_args PIPE io_list io_redirect_bg NEWLINE {
-        printf("   Yacc: Execute command\n");
         Command::_currentCommand.execute();
     }
     | command_and_args io_list NEWLINE {
@@ -75,7 +73,6 @@ arg_list:
 
 argument:
 	WORD {
-		printf("   Yacc: insert argument \"%s\"\n", $1);
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
 	;
@@ -83,7 +80,6 @@ argument:
 
 command_word:
 	WORD {
-		printf("   Yacc: insert command \"%s\"\n", $1);
 		Command::_currentSimpleCommand = new SimpleCommand();
 		Command::_currentSimpleCommand->insertArgument($1);
 	}
@@ -92,7 +88,6 @@ command_word:
 
 io_redirect_bg:
 	  BG {
-        printf("   Yacc: your program run in background\n");
         Command::_currentCommand._background = 1;
     }
 	;
@@ -106,12 +101,10 @@ io_list:
 
 io_redirect:
     DOUBLEGREAT WORD {
-        printf("   Yacc: redirect stdout and stderr to %s\n", $2);
         Command::_currentCommand._append = 1;
         Command::_currentCommand._outFile = $2;
     }
     |   GREAT WORD {
-        printf("   Yacc: redirect stdout to %s\n", $2);
         Command::_currentCommand._outFile = $2;
     }
     |   LESS WORD {
@@ -121,7 +114,6 @@ io_redirect:
 
 error_opt:
 	ERR WORD{
-		printf("   Yacc: insert output \"%s\"\n", $2);
 		Command::_currentCommand._errFile = $2;
 	}
 	|
