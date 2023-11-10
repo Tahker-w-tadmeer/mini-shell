@@ -28,8 +28,8 @@ struct Command {
     int _append;
     std::string *_availableCommands;
 
-	void prompt();
-	void print();
+	static void prompt();
+	void print() const;
 	void execute();
 	void clear();
 	

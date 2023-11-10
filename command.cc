@@ -1,11 +1,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <cstring>
-#include <csignal>
-#include <iostream>
 #include <string>
 #include <sys/fcntl.h>
 
@@ -49,6 +46,7 @@ Command::Command() {
     _inputFile = nullptr;
     _errFile = nullptr;
     _background = 0;
+    _append = 0;
 }
 
 void Command::insertSimpleCommand(SimpleCommand *simpleCommand) {
@@ -86,13 +84,13 @@ void Command::clear() {
     }
 
     _numberOfSimpleCommands = 0;
-    _outFile = 0;
-    _inputFile = 0;
-    _errFile = 0;
+    _outFile = nullptr;
+    _inputFile = nullptr;
+    _errFile = nullptr;
     _background = 0;
 }
 
-void Command::print() {
+void Command::print() const {
     printf("\n\n");
     printf("              COMMAND TABLE                \n");
     printf("\n");
@@ -117,11 +115,11 @@ void Command::print() {
 }
 
 char* getFullPath(char* file) {
-    char sep = '/';
+    char sep[] = "/";
     char* fullpath = new char[sizeof (file) + sizeof (working_dir) + 1];
-    if(file && file[0] != sep) {
+    if(file && file[0] != sep[0]) {
         strcpy(fullpath, working_dir);
-        strcat(fullpath, &sep);
+        strcat(fullpath, sep);
 
         strcat(fullpath, file);
     }
@@ -178,7 +176,7 @@ void Command::execute() {
     int fdin = dup(default_in);
     int fdout = dup(default_out);
     int fderr = dup(default_err);
-    int fpipes[2];
+    //int fpipes[2];
 
     // pipe command to pass data between processes it returns two file descriptors
     // also we check it is successful if it returns 0 and error if -1
@@ -186,15 +184,12 @@ void Command::execute() {
     char* output = getFullPath(_outFile);
     char* error = getFullPath(_errFile);
 
-    printf("%s\n%s\n%s", input, output, error);
-
     if (input[0] != '\0') {
         fdin = open(input, O_RDONLY);
     }
     dup2(fdin, 0);
     close(fdin);
 
-    //here he check if i is the last command to set the output and error file
     //in case of single greater than sign it will overwrite the output file
     if(output[0] != '\0') {
         int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
