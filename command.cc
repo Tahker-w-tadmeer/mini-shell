@@ -128,7 +128,7 @@ void Command::execute() {
     }
 
 
-    ls_execute(_currentSimpleCommand->_numberOfArguments, _currentCommand);
+//    ls_execute(_currentSimpleCommand->_numberOfArguments, _currentCommand);
 //dup returns a new file descriptor that is a copy of the file descriptor passed as argument;
     int default_in = dup(0);//0 is the file descriptor for stdin
     int default_out = dup(1);//1 is the file descriptor for stdout
