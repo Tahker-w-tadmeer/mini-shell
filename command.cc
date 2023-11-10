@@ -128,9 +128,7 @@ void Command::execute() {
     }
 
 
-    // Print contents of Command data structure
-     print();
-
+    ls_execute(_currentSimpleCommand->_numberOfArguments, _currentCommand);
 //dup returns a new file descriptor that is a copy of the file descriptor passed as argument;
     int default_in = dup(0);//0 is the file descriptor for stdin
     int default_out = dup(1);//1 is the file descriptor for stdout
@@ -195,7 +193,7 @@ void Command::execute() {
             perror("fork");
             exit(EXIT_FAILURE);
         }
-        if(pid==0){
+        if(pid==0) {
             if (_outFile!=nullptr)
                 close(fdout);
             if (_errFile!=nullptr)
