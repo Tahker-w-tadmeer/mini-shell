@@ -117,11 +117,6 @@ void Command::print() {
 }
 
 void Command::execute() {
-//    printf("%s\n", _currentCommand._errFile);
-//    printf("%s\n", _currentCommand._inputFile);
-//    printf("%s\n", _currentCommand._outFile);
-//    printf("%d\n", _currentCommand._background);
-    // Don't do anything if there are no simple commands
 
     if (_numberOfSimpleCommands == 0) {
         prompt();
@@ -165,7 +160,7 @@ void Command::execute() {
         if (i == _numberOfSimpleCommands - 1) {
             //in case of single greater than sign it will overwrite the output file
             if (_outFile && !_append) {
-                fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);//0666 is the permission
             }
                 //in case of double greater than sign it will append the output to the file
             else if (_outFile && _append) {

@@ -31,7 +31,9 @@ commands:
 	;
 
 command: simple_command
-    |complex_command
+
+    | complex_command
+
     ;
 
 
@@ -50,10 +52,11 @@ complex_command:
         printf("   Yacc: Execute command\n");
         Command::_currentCommand.execute();
     }
-    | command_and_args PIPE io_list NEWLINE {
+    | command_and_args io_list NEWLINE {
         printf("   Yacc: Execute command\n");
         Command::_currentCommand.execute();
     }
+    |
     ;
 
 command_and_args:
