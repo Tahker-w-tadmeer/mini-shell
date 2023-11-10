@@ -117,97 +117,104 @@ void Command::print() {
 }
 
 void Command::execute() {
-    printf("%s\n", _currentCommand._errFile);
-    printf("%s\n", _currentCommand._inputFile);
-    printf("%s\n", _currentCommand._outFile);
-    printf("%d\n", _currentCommand._background);
+//    printf("%s\n", _currentCommand._errFile);
+//    printf("%s\n", _currentCommand._inputFile);
+//    printf("%s\n", _currentCommand._outFile);
+//    printf("%d\n", _currentCommand._background);
     // Don't do anything if there are no simple commands
+
     if (_numberOfSimpleCommands == 0) {
         prompt();
         return;
     }
 
+    print();
 
-//    ls_execute(_currentSimpleCommand->_numberOfArguments, _currentCommand);
-//dup returns a new file descriptor that is a copy of the file descriptor passed as argument;
     int default_in = dup(0);//0 is the file descriptor for stdin
     int default_out = dup(1);//1 is the file descriptor for stdout
     int default_err = dup(2);//2 is the file descriptor for stderr
+
     int fdin;
     int fdout;
     int fderr;
-    int pipes[2];
+    int fpipes[2];
+
     //pipe command to pass data between processes it returns two file descriptors also we check it is successful if it returns 0 and error if -1
-    if (pipe(pipes) == -1) {
-        perror("pipe");
-        exit(EXIT_FAILURE);
+    if (_inputFile) {
+        fdin = open(_inputFile, O_RDONLY);
+    } else {
+        fdin = dup(default_in);
     }
-    for (int i = 0; i < _numberOfSimpleCommands; ++i) {
+    dup2(fdin, 0);
+    close(fdin);
+    for (int i = 0; i < _numberOfSimpleCommands; i++) {
+        //make exit function to say good bye
         if (strcasecmp(_simpleCommands[i]->_arguments[0], "exit") == 0) {
             printf("Good bye!!\n");
             exit(1);
         }
-
-        if (_inputFile != nullptr) {
-            fdin = open(_inputFile, O_RDONLY);
-            if (fdin < 0) {
-                perror("open");
-                exit(EXIT_FAILURE);
+        //make cd function to change directory
+        if (strcasecmp(_simpleCommands[i]->_arguments[0], "cd") == 0) {
+            if (_simpleCommands[i]->_arguments[1] == nullptr) {
+                chdir(getenv("HOME"));
+            } else {
+                chdir(_simpleCommands[i]->_arguments[1]);
             }
-            dup2(fdin, 0);
-            close(fdin);
-        } else {
-            dup2(default_in, 0);
         }
+        //here he check if i is the last command to set the output and error file
         if (i == _numberOfSimpleCommands - 1) {
-            if (_outFile != nullptr) {
+            //in case of single greater than sign it will overwrite the output file
+            if (_outFile && !_append) {
                 fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                if (fdout < 0) {
-                    perror("open");
-                    exit(EXIT_FAILURE);
-                }
-                dup2(fdout, 1);
-                close(fdout);
-            } else {
-                dup2(default_out, 1);
             }
-            if (_errFile != nullptr) {
+                //in case of double greater than sign it will append the output to the file
+            else if (_outFile && _append) {
+                fdout = open(_outFile, O_WRONLY | O_CREAT | O_APPEND, 0666);
+                _append = 0;
+            }
+            //in case of no output file it will set the output to the default output
+            else {
+                fdout = dup(default_out);
+            }
+            //in case of double greater than sign it will overwrite the error file
+            if (_errFile) {
                 fderr = open(_errFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                if (fderr < 0) {
-                    perror("open");
-                    exit(EXIT_FAILURE);
-                }
-                dup2(fderr, 2);
-                close(fderr);
-            } else {
-                dup2(default_err, 2);
             }
-        } else {
-            dup2(pipes[1], 1);
-            close(pipes[1]);
-            dup2(pipes[0], 0);
-            close(pipes[0]);
+            // in case of no error file it will set the error to the default error
+            else {
+                fderr=dup(default_err);
+            }
         }
-        int pid = fork();
+        //here he check for the pipe
+        else{
+            int p=pipe(fpipes);
+            if (p==-1){
+                perror("pipe");
+                exit(1);
+            }
+            fdout = fpipes[1];
+            fdin = fpipes[0];
+            fderr = dup(fdout);
+
+        }
+        dup2(fdout, 1);
+        dup2(fderr, 2);
+        close(fdout);
+        close(fderr);
+        int pid=fork();
         if (pid == -1) {
             perror("fork");
-            exit(EXIT_FAILURE);
+            exit(1);
         }
-        if(pid==0) {
-            if (_outFile!=nullptr)
-                close(fdout);
-            if (_errFile!=nullptr)
-                close(fderr);
-            if (_inputFile!=nullptr)
-                close(fdin);
+        if (pid == 0) {
+            //child
+            if (execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments) < 0) {
+                perror("execvp");
+                exit(1);
+            }
+        }
 
-        }
-        close(default_in);
-        close(default_out);
-        close(default_err);
-        execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
-        perror("execvp");
-        exit(EXIT_FAILURE);
+
     }
     dup2(default_in, 0);
     dup2(default_out, 1);
@@ -215,8 +222,13 @@ void Command::execute() {
     close(default_in);
     close(default_out);
     close(default_err);
+
+    if (_background == 0) {
+        waitpid(-1, 0, 0);
+    }
     // Clear to prepare for next command
     clear();
+
 
     // Print new prompt
     prompt();
@@ -245,17 +257,9 @@ void defineCommand(std::string args[], int argsNumber = 0) {
     Command::_currentCommand.insertSimpleCommand(command);
 }
 
-void defineCommands() {
-    std::string args[] = {"ls"};
-    defineCommand(args);
 
-    std::string args1[] = {"cat"};
-    defineCommand(args1);
-}
 
 int main() {
-    defineCommands();
-
     Command::_currentCommand.prompt();
     yyparse();
     return 0;

@@ -22,11 +22,9 @@
         return DOUBLEGREAT;
 }
 ">>&"    {
-        return DOUBLEGREATAND;
+        return ERR;
 }
-">&"    {
-        return GREATAND;
-}
+
 "&"    {
         return BG;
 }

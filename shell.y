@@ -1,6 +1,6 @@
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE GREATAND DOUBLEGREAT LESS PIPE BG DOUBLEGREATAND
+%token 	NOTOKEN GREAT NEWLINE ERR DOUBLEGREAT LESS PIPE BG
 
 %union	{
     char *string_val;
@@ -30,23 +30,14 @@ commands:
 	| commands  command
 	;
 
-command: simple_command io_redirect_bg
-    | complex_grammer
+command: simple_command
+    |complex_command
     ;
 
-complex_grammer:
-    command_and_args separator_list io_redirect io_redirect_bg NEWLINE{
-    printf("   Yacc: Execute complex command\n");
-    Command::_currentCommand.execute();
-    }
-    | command_and_args separator_list io_redirect NEWLINE {
-    printf("   Yacc: Execute complex command\n");
-    Command::_currentCommand.execute();
-    }
-    ;
+
 
 simple_command:
-	command_and_args NEWLINE {
+	command_and_args error_opt NEWLINE {
 		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
@@ -54,11 +45,22 @@ simple_command:
 	| error NEWLINE { yyerrok; }
 	;
 
+complex_command:
+    command_and_args PIPE io_list io_redirect_bg NEWLINE {
+        printf("   Yacc: Execute command\n");
+        Command::_currentCommand.execute();
+    }
+    | command_and_args PIPE io_list NEWLINE {
+        printf("   Yacc: Execute command\n");
+        Command::_currentCommand.execute();
+    }
+    ;
 
 command_and_args:
 	command_word arg_list {
 		Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
+	|
 	;
 
 
@@ -86,31 +88,11 @@ command_word:
 	;
 
 
-separator_list:
-    separator_list separator
-    | /* can be empty */
-    ;
-
-
-separator:
-	PIPE command_and_args{
-	    Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
-	}
-	| /* can be empty */
-	;
-
-
 io_redirect_bg:
-	io_list BG {
-		// Fork the process and run the command in the child process.
-		pid_t pid = fork();
-		if (pid == 0) {
-			// Child process.
-			Command::_currentCommand.execute();
-			exit(0);
-		}
-	}
-	| /* can be empty */
+	  BG {
+        printf("   Yacc: your program run in background\n");
+        Command::_currentCommand._background = 1;
+    }
 	;
 
 io_list:
@@ -123,6 +105,7 @@ io_list:
 io_redirect:
     DOUBLEGREAT WORD {
         printf("   Yacc: redirect stdout and stderr to %s\n", $2);
+        Command::_currentCommand._append = 1;
         Command::_currentCommand._outFile = $2;
     }
     |   GREAT WORD {
@@ -132,21 +115,15 @@ io_redirect:
     |   LESS WORD {
             Command::_currentCommand._inputFile = $2;
         }
-    |   DOUBLEGREATAND WORD {
-        Command::_currentCommand._outFile = $2;
-        Command::_currentCommand._errFile = $2;
-    }
-    |   GREATAND WORD {
-        Command::_currentCommand._outFile = $2;
-        Command::_currentCommand._errFile = $2;
-    }
-    |   BG{
-         printf("   Yacc: your program run in background\n");
-         Command::_currentCommand._background = 1;
-        }
-    | /* can be empty */
     ;
 
+error_opt:
+	ERR WORD{
+		printf("   Yacc: insert output \"%s\"\n", $2);
+		Command::_currentCommand._errFile = $2;
+	}
+	|
+	;
 %%
 
 void
