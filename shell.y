@@ -142,7 +142,7 @@ io_redirect:
     }
     |   BG{
          printf("   Yacc: your program run in background\n");
-         Command::_currentCommand._background = true;
+         Command::_currentCommand._background = 1;
         }
     | /* can be empty */
     ;
