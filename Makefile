@@ -16,11 +16,8 @@ y.tab.o: shell.y
 command.o: command.cc
 	$(CC) -c command.cc
 
-ls_output.o: commands/ls_output.cc
-	$(CC) -c commands/ls_output.cc
-
-shell: y.tab.o lex.yy.o command.o ls_output.o
-	$(CC) -o shell lex.yy.o y.tab.o ls_output.o command.o -ll
+shell: y.tab.o lex.yy.o command.o
+	$(CC) -o shell lex.yy.o y.tab.o command.o -ll
 
 clean:
 	rm -f lex.yy.c y.tab.c y.tab.h shell *.o

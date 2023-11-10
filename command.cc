@@ -186,6 +186,8 @@ void Command::execute() {
     char* output = getFullPath(_outFile);
     char* error = getFullPath(_errFile);
 
+    printf("%s\n%s\n%s", input, output, error);
+
     if (input[0] != '\0') {
         fdin = open(input, O_RDONLY);
     }
