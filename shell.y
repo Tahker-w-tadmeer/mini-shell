@@ -53,7 +53,6 @@ complex_command:
         Command::_currentCommand.execute();
     }
     | command_and_args io_list NEWLINE {
-        printf("   Yacc: Execute command\n");
         Command::_currentCommand.execute();
     }
     |

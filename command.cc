@@ -9,9 +9,9 @@
 #include <string>
 #include <sys/fcntl.h>
 
-#include "commands/ls_output.h"
-
 #include "command.h"
+
+char working_dir[256];
 
 SimpleCommand::SimpleCommand() {
     // Create available space for 5 arguments
@@ -116,101 +116,20 @@ void Command::print() {
 
 }
 
-void Command::execute() {
+char* getFullPath(char* file) {
+    char sep = '/';
+    char* fullpath = new char[sizeof (file) + sizeof (working_dir) + 1];
+    if(file && file[0] != sep) {
+        strcpy(fullpath, working_dir);
+        strcat(fullpath, &sep);
 
-    if (_numberOfSimpleCommands == 0) {
-        prompt();
-        return;
+        strcat(fullpath, file);
     }
 
-    print();
+    return fullpath;
+}
 
-    int default_in = dup(0);//0 is the file descriptor for stdin
-    int default_out = dup(1);//1 is the file descriptor for stdout
-    int default_err = dup(2);//2 is the file descriptor for stderr
-
-    int fdin;
-    int fdout;
-    int fderr;
-    int fpipes[2];
-
-    //pipe command to pass data between processes it returns two file descriptors also we check it is successful if it returns 0 and error if -1
-    if (_inputFile) {
-        fdin = open(_inputFile, O_RDONLY);
-    } else {
-        fdin = dup(default_in);
-    }
-    dup2(fdin, 0);
-    close(fdin);
-    for (int i = 0; i < _numberOfSimpleCommands; i++) {
-        //make exit function to say good bye
-        if (strcasecmp(_simpleCommands[i]->_arguments[0], "exit") == 0) {
-            printf("Good bye!!\n");
-            exit(1);
-        }
-        //make cd function to change directory
-        if (strcasecmp(_simpleCommands[i]->_arguments[0], "cd") == 0) {
-            if (_simpleCommands[i]->_arguments[1] == nullptr) {
-                chdir(getenv("HOME"));
-            } else {
-                chdir(_simpleCommands[i]->_arguments[1]);
-            }
-        }
-        //here he check if i is the last command to set the output and error file
-        if (i == _numberOfSimpleCommands - 1) {
-            //in case of single greater than sign it will overwrite the output file
-            if (_outFile && !_append) {
-                fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);//0666 is the permission
-            }
-                //in case of double greater than sign it will append the output to the file
-            else if (_outFile && _append) {
-                fdout = open(_outFile, O_WRONLY | O_CREAT | O_APPEND, 0666);
-                _append = 0;
-            }
-            //in case of no output file it will set the output to the default output
-            else {
-                fdout = dup(default_out);
-            }
-            //in case of double greater than sign it will overwrite the error file
-            if (_errFile) {
-                fderr = open(_errFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-            }
-            // in case of no error file it will set the error to the default error
-            else {
-                fderr=dup(default_err);
-            }
-        }
-        //here he check for the pipe
-        else{
-            int p=pipe(fpipes);
-            if (p==-1){
-                perror("pipe");
-                exit(1);
-            }
-            fdout = fpipes[1];
-            fdin = fpipes[0];
-            fderr = dup(fdout);
-
-        }
-        dup2(fdout, 1);
-        dup2(fderr, 2);
-        close(fdout);
-        close(fderr);
-        int pid=fork();
-        if (pid == -1) {
-            perror("fork");
-            exit(1);
-        }
-        if (pid == 0) {
-            //child
-            if (execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments) < 0) {
-                perror("execvp");
-                exit(1);
-            }
-        }
-
-
-    }
+void Command::finishExecuting(int default_in, int default_out, int default_err) {
     dup2(default_in, 0);
     dup2(default_out, 1);
     dup2(default_err, 2);
@@ -219,20 +138,99 @@ void Command::execute() {
     close(default_err);
 
     if (_background == 0) {
-        waitpid(-1, 0, 0);
+        waitpid(-1, nullptr, 0);
     }
     // Clear to prepare for next command
     clear();
-
 
     // Print new prompt
     prompt();
 }
 
-// Shell implementation
+void Command::execute() {
+    if (_numberOfSimpleCommands == 0) {
+        prompt();
+        return;
+    }
 
+    int default_in = dup(0); // 0 is the file descriptor for stdin
+    int default_out = dup(1); // 1 is the file descriptor for stdout
+    int default_err = dup(2); // 2 is the file descriptor for stderr
+
+    //make exit function to say goodbye
+    if (strcasecmp(_currentSimpleCommand->_arguments[0], "exit") == 0) {
+        printf("Goodbye\n");
+        exit(1);
+    }
+    //make cd function to change directory
+    if (strcasecmp(_currentSimpleCommand->_arguments[0], "cd") == 0) {
+        if (_currentSimpleCommand->_arguments[1] == nullptr) {
+            chdir(getenv("HOME"));
+        } else {
+            chdir(_currentSimpleCommand->_arguments[1]);
+        }
+
+        getcwd(working_dir, sizeof (working_dir));
+        finishExecuting(default_in, default_out, default_err);
+        return;
+    }
+
+    int fdin = dup(default_in);
+    int fdout = dup(default_out);
+    int fderr = dup(default_err);
+    int fpipes[2];
+
+    // pipe command to pass data between processes it returns two file descriptors
+    // also we check it is successful if it returns 0 and error if -1
+    char* input = getFullPath(_inputFile);
+    char* output = getFullPath(_outFile);
+    char* error = getFullPath(_errFile);
+
+    if (input[0] != '\0') {
+        fdin = open(input, O_RDONLY);
+    }
+    dup2(fdin, 0);
+    close(fdin);
+
+    //here he check if i is the last command to set the output and error file
+    //in case of single greater than sign it will overwrite the output file
+    if(output[0] != '\0') {
+        int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
+
+        fdout = open(output, mode, 0666);
+        _append = 0;
+    }
+    dup2(fdout, 1);
+    close(fdout);
+
+    //in case of double greater than sign it will overwrite the error file
+    if (error[0] != '\0') {
+        fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    }
+    dup2(fderr, 2);
+    close(fderr);
+
+
+    int pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (pid == 0) {
+        //child: Executing the actual command
+        if (execvp(_currentSimpleCommand->_arguments[0], _currentSimpleCommand->_arguments) < 0) {
+            perror("execvp");
+            exit(1);
+        }
+    }
+
+    finishExecuting(default_in, default_out, default_err);
+}
+
+// Shell implementation
 void Command::prompt() {
-    printf("shell> ");
+    printf("%s# ", working_dir);
     fflush(stdout);
 }
 
@@ -241,20 +239,9 @@ SimpleCommand *Command::_currentSimpleCommand;
 
 int yyparse();
 
-void defineCommand(std::string args[], int argsNumber = 0) {
-    SimpleCommand *command = new SimpleCommand();
-    for (int i = 0; i < argsNumber; i++) {
-        char *char_arr = new char[args[i].length() + 1];
-        strcpy(char_arr, args[i].c_str());
-        command->insertArgument(char_arr);
-    }
-
-    Command::_currentCommand.insertSimpleCommand(command);
-}
-
-
-
 int main() {
+    getcwd(working_dir, sizeof(working_dir));
+
     Command::_currentCommand.prompt();
     yyparse();
     return 0;
