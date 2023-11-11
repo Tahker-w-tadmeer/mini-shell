@@ -1,0 +1,22 @@
+total 832
+drwxr-xr-x@ 21 peteranton  staff     672 Nov 11 15:16 .
+drwxr-xr-x   5 peteranton  staff     160 Nov  7 16:50 ..
+drwxr-xr-x  15 peteranton  staff     480 Nov 11 14:50 .git
+-rw-r--r--   1 peteranton  staff     173 Nov 10 05:57 .gitignore
+drwxr-xr-x   6 peteranton  staff     192 Nov 11 15:14 .idea
+-rwxr-xr-x   1 peteranton  staff     337 Nov 11 02:08 Makefile
+-rwxr-xr-x   1 peteranton  staff    8204 Nov 11 14:50 command.cc
+-rwxr-xr-x   1 peteranton  staff     867 Nov 11 06:37 command.h
+-rw-r--r--   1 peteranton  staff  114704 Nov 11 15:15 command.o
+drwxr-xr-x   6 peteranton  staff     192 Nov  7 16:50 examples
+-rw-r--r--   1 peteranton  staff   45339 Nov 11 15:15 lex.yy.c
+-rw-r--r--   1 peteranton  staff   34616 Nov 11 15:15 lex.yy.o
+-rw-r--r--   1 peteranton  staff       4 Nov 11 15:16 logs.txt
+-rw-r--r--   1 peteranton  staff       0 Nov 11 15:16 out
+-rw-r--r--   1 peteranton  staff      14 Nov  7 16:50 readme.md
+-rwxr-xr-x   1 peteranton  staff   86648 Nov 11 15:15 shell
+-rwxr-xr-x   1 peteranton  staff     520 Nov 11 15:15 shell.l
+-rwxr-xr-x   1 peteranton  staff    2078 Nov 11 02:08 shell.y
+-rw-r--r--   1 peteranton  staff   45176 Nov 11 15:15 y.tab.c
+-rw-r--r--   1 peteranton  staff    2491 Nov 11 15:15 y.tab.h
+-rw-r--r--   1 peteranton  staff   33504 Nov 11 15:15 y.tab.o
