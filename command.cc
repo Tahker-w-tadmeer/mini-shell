@@ -181,21 +181,6 @@ void Command::execute() {
             continue;
         }
 
-        if (strcasecmp(cmd, "echo") == 0) {
-            pid = fork();
-            if (pid == 0) {
-                char *command = new char[sizeof(_simpleCommands[i]->_arguments[0]) +
-                                         sizeof(_simpleCommands[i]->_arguments[1]) + 1];
-                strcpy(command, _simpleCommands[i]->_arguments[0]);
-                strcat(command, " ");
-                strcat(command, _simpleCommands[i]->_arguments[1]);
-
-                execlp("/bin/sh", "sh", "-c", command, nullptr);
-            }
-
-            continue;
-        }
-
         dup2(fdin, 0);
         close(fdin);
 
@@ -238,6 +223,17 @@ void Command::execute() {
 
         if (pid == 0) {
             //child: Executing the actual command
+
+            if (strcasecmp(cmd, "echo") == 0) {
+                char *command = new char[sizeof(_simpleCommands[i]->_arguments[0]) +
+                                         sizeof(_simpleCommands[i]->_arguments[1]) + 1];
+                strcpy(command, _simpleCommands[i]->_arguments[0]);
+                strcat(command, " ");
+                strcat(command, _simpleCommands[i]->_arguments[1]);
+
+                execlp("/bin/sh", "sh", "-c", command, nullptr);
+            }
+
             execvp(currentSimpleCommand->_arguments[0], currentSimpleCommand->_arguments);
 
             perror("Execute failed");
