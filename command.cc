@@ -193,13 +193,6 @@ void Command::execute() {
         }
         dup2(fdin, 0);
         close(fdin);
-        if (() {
-
-        }
-        })
-        if(i!=0){
-            p
-        }
 
 
         //in case of single greater than sign it will overwrite the output file
