@@ -147,21 +147,54 @@ void clearLogs() {
     remove("logs.txt");
 }
 
-void Command::pipeHandler() {
-    int previous[2], next[2];
+// Shell implementation
+void Command::prompt() {
+    printf("%s# ", working_dir);
+    fflush(stdout);
+}
 
-    int default_in = dup(0);
-    int default_out = dup(1);
-    int default_err = dup(2);
+void Command::execute() {
+    if (_numberOfSimpleCommands == 0) {
+        prompt();
+        return;
+    }
+    int default_in = dup(0); // 0 is the file descriptor for stdin
+    int default_out = dup(1); // 1 is the file descriptor for stdout
+    int default_err = dup(2); // 2 is the file descriptor for stderr
 
+    bool isPreviousPipe = false;
+    int fpipes[2];
     for (int i = 0; i < _numberOfSimpleCommands; i++) {
-        if(pipe(previous) == -1) {
-            perror("Pipe Error");
-            exit(2);
+        SimpleCommand *currentSimpleCommand = _simpleCommands[i];
+        char *cmd = currentSimpleCommand->_arguments[0];
+
+        // Handle exit command
+        if (strcasecmp(cmd, "exit") == 0) {
+            printf("Goodbye\n");
+            exit(1);
         }
 
-        int fdin = dup(previous[0]);
-        int fdout = dup(previous[1]);
+        // Handle change directory cd
+        if (strcasecmp(cmd, "cd") == 0) {
+            chdir(
+                    (currentSimpleCommand->_arguments[1] == nullptr)
+                    ? getenv("HOME")
+                    : currentSimpleCommand->_arguments[1]
+            );
+
+            getcwd(working_dir, sizeof(working_dir));
+            finishExecuting(default_in, default_out, default_err);
+            continue;
+        }
+
+        int fdin, fdout;
+        if(isPreviousPipe) {
+            fdin = dup(fpipes[0]);
+            fdout = dup(default_out);
+        }else {
+            fdin = dup(default_in);
+            fdout = dup(default_out);
+        }
         int fderr = dup(default_err);
 
         char *input = getFullPath(_inputFile);
@@ -184,12 +217,28 @@ void Command::pipeHandler() {
         dup2(fdout, 1);
         close(fdout);
 
-        if (error[0] != '\0') {
-            fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        }
-        dup2(fderr, 2);
-        close(fderr);
+        if (i == _numberOfSimpleCommands - 1) { // Last command to be executed
+            if (error[0] != '\0') {
+                fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            }
+            dup2(fderr, 2);
+            close(fderr);
 
+            isPreviousPipe = false;
+        } else {
+            // Create pipe in order to allow parent process to communicate with child process
+            if (pipe(fpipes) == -1) {
+                perror("pipe");
+                exit(1);
+            }
+
+            dup2(fpipes[0], 0);
+            dup2(fpipes[1], 1);
+            close(fpipes[0]);
+            close(fpipes[1]);
+
+            isPreviousPipe = true;
+        }
         int pid = fork();
         if (pid == -1) {
             perror("fork");
@@ -198,119 +247,14 @@ void Command::pipeHandler() {
 
         if (pid == 0) {
             //child: Executing the actual command
-            if (execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments) < 0) {
+            if (execvp(currentSimpleCommand->_arguments[0], currentSimpleCommand->_arguments) < 0) {
                 perror("execvp");
                 exit(1);
             }
-
-            next[0] = previous[1];
-            next[1] = dup(default_out);
-        }
-    }
-}
-
-void Command::execute() {
-    if (_numberOfSimpleCommands == 0) {
-        prompt();
-        return;
-    }
-    int default_in = dup(0); // 0 is the file descriptor for stdin
-    int default_out = dup(1); // 1 is the file descriptor for stdout
-    int default_err = dup(2); // 2 is the file descriptor for stderr
-
-    SimpleCommand *currentSimpleCommand = _currentSimpleCommand;
-    char *cmd = currentSimpleCommand->_arguments[0];
-
-    // Handle exit command
-    if (strcasecmp(cmd, "exit") == 0) {
-        printf("Goodbye\n");
-        exit(1);
-    }
-
-    // Handle change directory cd
-    if (strcasecmp(cmd, "cd") == 0) {
-        chdir(
-                (currentSimpleCommand->_arguments[1] == nullptr)
-                ? getenv("HOME")
-                : currentSimpleCommand->_arguments[1]
-        );
-
-        getcwd(working_dir, sizeof(working_dir));
-        finishExecuting(default_in, default_out, default_err);
-        return;
-    }
-
-    int fdin = dup(default_in);
-    int fdout = dup(default_out);
-    int fderr = dup(default_err);
-
-    char *input = getFullPath(_inputFile);
-    char *output = getFullPath(_outFile);
-    char *error = getFullPath(_errFile);
-
-    if (input[0] != '\0') {
-        fdin = open(input, O_RDONLY);
-    }
-    dup2(fdin, 0);
-    close(fdin);
-
-    //in case of single greater than sign it will overwrite the output file
-    if (output[0] != '\0') {
-        int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
-
-        fdout = open(output, mode, 0666);
-        _append = 0;
-    }
-    dup2(fdout, 1);
-    close(fdout);
-
-    if (error[0] != '\0') {
-        fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    }
-    dup2(fderr, 2);
-    close(fderr);
-
-    if (_numberOfSimpleCommands > 1) { // Last command to be executed
-        // Handle Pipes
-        // Create pipe in order to allow parent process to communicate with child process
-//        if (pipe(fpipes) == -1) {
-//            perror("pipe");
-//            exit(1);
-//        }
-//
-//        dup2(fpipes[0], 0);
-//        dup2(fpipes[1], 1);
-//        close(fpipes[0]);
-//        close(fpipes[1]);
-
-
-        pipeHandler();
-
-        finishExecuting(default_in, default_out, default_err);
-        return;
-    }
-
-    int pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        exit(1);
-    }
-
-    if (pid == 0) {
-        //child: Executing the actual command
-        if (execvp(currentSimpleCommand->_arguments[0], currentSimpleCommand->_arguments) < 0) {
-            perror("execvp");
-            exit(1);
         }
     }
 
     finishExecuting(default_in, default_out, default_err);
-}
-
-// Shell implementation
-void Command::prompt() {
-    printf("%s# ", working_dir);
-    fflush(stdout);
 }
 
 Command Command::_currentCommand;

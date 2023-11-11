@@ -39,8 +39,6 @@ struct Command {
 	static SimpleCommand *_currentSimpleCommand;
 
     void finishExecuting(int default_in, int default_out, int default_err);
-
-    void pipeHandler();
 };
 
 #endif

@@ -1,4 +1,5 @@
-clear 
-ls 
 grep shell 
-exir 
+grep shell 
+
+
+
