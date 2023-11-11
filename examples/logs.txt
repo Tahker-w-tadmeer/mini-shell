@@ -1,0 +1,28 @@
+Child Died: 'cd examples ' Sun Nov 12 00:00:18 2023
+
+Child Died: 'ls ' Sun Nov 12 00:00:18 2023
+
+Child Died: 'clear ' Sun Nov 12 00:15:39 2023
+
+Child Died: 'ls ' Sun Nov 12 00:15:40 2023
+
+Child Died: 'ls -a ' Sun Nov 12 00:15:42 2023
+
+Child Died: 'ls ' Sun Nov 12 00:15:48 2023
+
+Child Died: 'grep cat ' Sun Nov 12 00:15:48 2023
+
+Child Died: 'ls ' Sun Nov 12 00:15:48 2023
+
+Child Died: 'grep cat ' Sun Nov 12 00:15:48 2023
+
+Child Died: 'ls -al ' Sun Nov 12 00:15:54 2023
+
+Child Died: 'grep 50 ' Sun Nov 12 00:15:54 2023
+
+Child Died: 'ls -al ' Sun Nov 12 00:15:54 2023
+
+Child Died: 'grep 50 ' Sun Nov 12 00:15:54 2023
+
+Child Died: 'clear ' Sun Nov 12 00:15:56 2023
+

@@ -13,7 +13,7 @@
 
 [ \t] 	{
 		/* Discard spaces and tabs */
-     	}	
+     	}
 
 ">" 	{
 		return GREAT;
@@ -29,9 +29,9 @@
         return BG;
 }
 
-"<" 	{
-        return LESS;
-    }
+"<" {
+    return LESS;
+}
 
 "|" {
     return PIPE;
@@ -43,10 +43,10 @@
 		return WORD;
 	}
 
-.	{
-		/* Invalid character in input */
-		return NOTOKEN;
-	}
+. {
+    /* Invalid character in input */
+    return NOTOKEN;
+}
 
 %%
-	
+

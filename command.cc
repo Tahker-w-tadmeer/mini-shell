@@ -177,8 +177,15 @@ void Command::execute() {
             );
 
             getcwd(working_dir, sizeof(working_dir));
+
             continue;
         }
+
+//        if (strcasecmp(cmd, "echo") == 0) {
+//
+//
+//            continue;
+//        }
 
         dup2(fdin, 0);
         close(fdin);
@@ -229,12 +236,12 @@ void Command::execute() {
         }
     }
 
-    dup2(default_in, 0);
-    dup2(default_out, 1);
-    dup2(default_err, 2);
     close(fdin);
     close(fdout);
     close(fderr);
+    dup2(default_in, 0);
+    dup2(default_out, 1);
+    dup2(default_err, 2);
 
     if (! _background) {
         waitpid(pid, 0, 0);
