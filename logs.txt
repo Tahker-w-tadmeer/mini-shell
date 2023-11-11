@@ -1,8 +1,6 @@
-clear 
-sls 
 ls 
-. 
-clear 
-cat test 
+ls -al 
+cat out 
+grep shell 
 grep shell 
 
