@@ -156,32 +156,41 @@ void Command::execute() {
     int default_out = dup(1); // 1 is the file descriptor for stdout
     int default_err = dup(2); // 2 is the file descriptor for stderr
 
+    bool isPreviousPipe = false;
+    int fpipes[2];
     for (int i = 0; i < _numberOfSimpleCommands; i++) {
         SimpleCommand *currentSimpleCommand = _simpleCommands[i];
+        char *cmd = currentSimpleCommand->_arguments[0];
 
-        //make exit function to say goodbye
-        if (strcasecmp(currentSimpleCommand->_arguments[0], "exit") == 0) {
+        // Handle exit command
+        if (strcasecmp(cmd, "exit") == 0) {
             printf("Goodbye\n");
             exit(1);
         }
-        //make cd function to change directory
-        if (strcasecmp(currentSimpleCommand->_arguments[0], "cd") == 0) {
-            char *dir = (currentSimpleCommand->_arguments[1] == nullptr) ? getenv("HOME")
-                                                                         : currentSimpleCommand->_arguments[1];
-            chdir(dir);
+
+        // Handle change directory cd
+        if (strcasecmp(cmd, "cd") == 0) {
+            chdir(
+                    (currentSimpleCommand->_arguments[1] == nullptr)
+                    ? getenv("HOME")
+                    : currentSimpleCommand->_arguments[1]
+            );
 
             getcwd(working_dir, sizeof(working_dir));
             finishExecuting(default_in, default_out, default_err);
             continue;
         }
 
-        int fdin = dup(default_in);
-        int fdout = dup(1);
-        int fderr = dup(2);
-        int fpipes[2];
+        int fdin, fdout;
+        if(isPreviousPipe) {
+            fdin = dup(fpipes[0]);
+            fdout = dup(default_out);
+        }else {
+            fdin = dup(default_in);
+            fdout = dup(default_out);
+        }
+        int fderr = dup(default_err);
 
-        // pipe command to pass data between processes it returns two file descriptors
-        // also we check it is successful if it returns 0 and error if -1
         char *input = getFullPath(_inputFile);
         char *output = getFullPath(_outFile);
         char *error = getFullPath(_errFile);
@@ -202,16 +211,16 @@ void Command::execute() {
         dup2(fdout, 1);
         close(fdout);
 
-        if (i == _numberOfSimpleCommands - 1) {
-
-            //in case of double greater than sign it will overwrite the error file
+        if (i == _numberOfSimpleCommands - 1) { // Last command to be executed
             if (error[0] != '\0') {
                 fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             }
             dup2(fderr, 2);
             close(fderr);
 
+            isPreviousPipe = false;
         } else {
+            // Create pipe in order to allow parent process to communicate with child process
             if (pipe(fpipes) == -1) {
                 perror("pipe");
                 exit(1);
@@ -221,6 +230,8 @@ void Command::execute() {
             dup2(fpipes[1], 1);
             close(fpipes[0]);
             close(fpipes[1]);
+
+            isPreviousPipe = true;
         }
         int pid = fork();
         if (pid == -1) {

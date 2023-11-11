@@ -1,11 +1,8 @@
 clear 
+sls 
 ls 
-ls 
-ls 
+. 
 clear 
 cat test 
-cat test 
 grep shell 
-
-
 

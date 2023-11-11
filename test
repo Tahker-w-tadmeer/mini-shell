@@ -1,0 +1,16 @@
+Makefile
+command.cc
+command.h
+command.o
+examples
+lex.yy.c
+lex.yy.o
+logs.txt
+readme.md
+shell
+shell.l
+shell.y
+test
+y.tab.c
+y.tab.h
+y.tab.o
