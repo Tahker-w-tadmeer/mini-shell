@@ -32,9 +32,7 @@ commands:
 	;
 
 command: simple_command
-
     | complex_command
-
     ;
 
 simple_command:

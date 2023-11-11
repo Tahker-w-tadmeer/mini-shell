@@ -125,27 +125,6 @@ char *getFullPath(char *file) {
     return fullpath;
 }
 
-void Command::finishExecuting(int default_in, int default_out, int default_err) {
-    dup2(default_in, 0);
-    dup2(default_out, 1);
-    dup2(default_err, 2);
-    close(default_in);
-    close(default_out);
-    close(default_err);
-
-    printf("Hello\n");
-    if (_background == 0) {
-        waitpid(-1, nullptr, 0);
-    }
-    printf("After %d\n", _background);
-
-    // Clear to prepare for next command
-    clear();
-
-    // Print new prompt
-    prompt();
-}
-
 void clearLogs() {
     remove("logs.txt");
 }
@@ -167,6 +146,17 @@ void Command::execute() {
 
     int fpipes[2];
     int pid;
+    int fdin, fdout, fderr;
+    char *input = getFullPath(_inputFile);
+    char *output = getFullPath(_outFile);
+    char *error = getFullPath(_errFile);
+
+    if (input[0] != '\0') {
+        fdin = open(input, O_RDONLY);
+    } else {
+        fdin = dup(default_in);
+    }
+
     for (int i = 0; i < _numberOfSimpleCommands; i++) {
         bool isLastCommand = _numberOfSimpleCommands - 1 == i;
 
@@ -191,26 +181,13 @@ void Command::execute() {
             continue;
         }
 
-        if (!isLastCommand && _numberOfSimpleCommands > 1) {
-            if (pipe(fpipes) == -1) {
-                perror("pipe");
-                exit(2);
-            }
-        }
-
-        int fdin = i == 0 ? default_in : fpipes[0];
-        int fdout = isLastCommand ? default_out : fpipes[1];
-
-        int fderr = default_err;
-
-        char *input = getFullPath(_inputFile);
-        char *output = getFullPath(_outFile);
-        char *error = getFullPath(_errFile);
-
-        if (input[0] != '\0' && i == 0) {
-            fdin = open(input, O_RDONLY);
-        }
         dup2(fdin, 0);
+        close(fdin);
+
+
+
+        dup2(fdin, 0);
+        close(fdin);
 
         //in case of single greater than sign it will overwrite the output file
         if (output[0] != '\0' && isLastCommand) {
@@ -218,13 +195,25 @@ void Command::execute() {
 
             fdout = open(output, mode, 0666);
             _append = 0;
+        } else {
+            fdout = dup(default_out);
         }
-        dup2(fdout, 1);
 
         if (error[0] != '\0' && isLastCommand) {
             fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        } else {
+            fderr = dup(default_err);
         }
-        dup2(fderr, 2);
+
+        if (!isLastCommand && _numberOfSimpleCommands > 1) {
+            if (pipe(fpipes) == -1) {
+                perror("pipe");
+                exit(2);
+            }
+
+            fdout = fpipes[1];
+            fdin = fpipes[0];
+        }
 
         pid = fork();
         if (pid == -1) {
@@ -232,14 +221,13 @@ void Command::execute() {
             exit(1);
         }
 
+        dup2(fdout, 1);
+        dup2(fderr, 2);
+        close(fdout);
+        close(fderr);
+
         if (pid == 0) {
             //child: Executing the actual command
-            close(fpipes[0]);
-            close(fpipes[1]);
-            close(default_in);
-            close(default_out);
-            close(default_err);
-
             execvp(currentSimpleCommand->_arguments[0], currentSimpleCommand->_arguments);
 
             perror("Execute failed");
@@ -247,9 +235,22 @@ void Command::execute() {
         }
     }
 
-    close(fpipes[0]);
-    close(fpipes[1]);
-    finishExecuting(default_in, default_out, default_err);
+    dup2(default_in, 0);
+    dup2(default_out, 1);
+    dup2(default_err, 2);
+    close(fdin);
+    close(fdout);
+    close(fderr);
+
+    if (! _background) {
+        waitpid(pid, 0, 0);
+    }
+
+    // Clear to prepare for next command
+    clear();
+
+    // Print new prompt
+    prompt();
 }
 
 Command Command::_currentCommand;
@@ -265,39 +266,27 @@ void signalHandler(int signum) {
     Command::_currentCommand.prompt();
 }
 
-//void handleChildDeath(int sig_num) {
-//    pid_t child_pid;
-//    int status;
-//    char path_to_log[64];
-//    strcpy(path_to_log, argv[1]);
-//    strcat(path_to_log, "/child-log.txt");
-//    FILE *logFile = fopen(path_to_log, "a");
-//    if (logFile == NULL) {
-//        perror("Error opening log file");
-//        exit(EXIT_FAILURE);
-//    }
-//    time_t Time = time(NULL);
-//    tm *time_pointer = localtime((&Time));
-//    char currentTime[32];
-//    strcpy(currentTime, asctime(time_pointer));
-//    removeNewline(currentTime, 32);
-//    fprintf(logFile, "%s: Child Terminated\n", currentTime);
-//    fclose(logFile);
-//}
-
 void handleChildDeath(int sigchild) { // Funeral
     int default_out = dup(1);
     int log = open("logs.txt", O_WRONLY | O_CREAT | O_APPEND, 0666); // Sus
     dup2(log, 1);
 
-    SimpleCommand *lastCommand = Command::_currentCommand._simpleCommands[
-            Command::_currentCommand._numberOfSimpleCommands - 1];
+    for (int i = 0; i < Command::_currentCommand._numberOfSimpleCommands; i++) {
+        SimpleCommand *command = Command::_currentCommand._simpleCommands[i];
 
-    for (int i = 0; i < lastCommand->_numberOfArguments; i++) {
-        std::cout << lastCommand->_arguments[i] << " ";
+        std::cout << "Child Died: '";
+
+        for (int j = 0; j < command->_numberOfArguments; j++) {
+            std::cout << command->_arguments[j] << " ";
+        }
+        time_t Time = time(nullptr);
+        tm *time_pointer = localtime((&Time));
+        char currentTime[32];
+        strcpy(currentTime, asctime(time_pointer));
+        std::cout << "' " << currentTime;
+        std::cout << std::endl;
+
     }
-    std::cout << std::endl;
-
     close(log);
     dup2(default_out, 1);
     close(default_out);
