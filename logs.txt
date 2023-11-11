@@ -1,8 +1,4 @@
 clear 
-sls 
 ls 
-. 
-clear 
-cat test 
 grep shell 
-
+exir 
