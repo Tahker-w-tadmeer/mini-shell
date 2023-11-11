@@ -1,3 +1,5 @@
-cat test 
 ls 
-
+ls >test2 
+ls 
+cat test2 
+grep hh 

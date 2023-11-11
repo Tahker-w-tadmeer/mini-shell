@@ -115,10 +115,10 @@ void Command::print() const {
 
 }
 
-char* getFullPath(char* file) {
+char *getFullPath(char *file) {
     char sep[] = "/";
-    char* fullpath = new char[sizeof (file) + sizeof (working_dir) + 1];
-    if(file && file[0] != sep[0]) {
+    char *fullpath = new char[sizeof(file) + sizeof(working_dir) + 1];
+    if (file && file[0] != sep[0]) {
         strcpy(fullpath, working_dir);
         strcat(fullpath, sep);
         strcat(fullpath, file);
@@ -158,8 +158,8 @@ void Command::execute() {
     int default_out = dup(1); // 1 is the file descriptor for stdout
     int default_err = dup(2); // 2 is the file descriptor for stderr
 
-    for (int i=0; i<_numberOfSimpleCommands; i++) {
-        SimpleCommand* currentSimpleCommand = _simpleCommands[i];
+    for (int i = 0; i < _numberOfSimpleCommands; i++) {
+        SimpleCommand *currentSimpleCommand = _simpleCommands[i];
 
         //make exit function to say goodbye
         if (strcasecmp(currentSimpleCommand->_arguments[0], "exit") == 0) {
@@ -169,7 +169,7 @@ void Command::execute() {
         //make cd function to change directory
         if (strcasecmp(currentSimpleCommand->_arguments[0], "cd") == 0) {
             char *dir = (currentSimpleCommand->_arguments[1] == nullptr) ? getenv("HOME")
-                                                                          : currentSimpleCommand->_arguments[1];
+                                                                         : currentSimpleCommand->_arguments[1];
             chdir(dir);
 
             getcwd(working_dir, sizeof(working_dir));
@@ -193,25 +193,35 @@ void Command::execute() {
         }
         dup2(fdin, 0);
         close(fdin);
-
-
-        //in case of single greater than sign it will overwrite the output file
-        if (output[0] != '\0') {
-            int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
-
-            fdout = open(output, mode, 0666);
-            _append = 0;
+        int p = pipe(fpipes);
+        if (p == -1) {
+            perror("pipe");
+            exit(1);
         }
-        dup2(fdout, 1);
-        close(fdout);
+        if (i == _numberOfSimpleCommands - 1) {
+            //in case of single greater than sign it will overwrite the output file
+            if (output[0] != '\0') {
+                int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 
-        //in case of double greater than sign it will overwrite the error file
-        if (error[0] != '\0') {
-            fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                fdout = open(output, mode, 0666);
+                _append = 0;
+            }
+            dup2(fdout, 1);
+            close(fdout);
+
+            //in case of double greater than sign it will overwrite the error file
+            if (error[0] != '\0') {
+                fderr = open(error, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            }
+            dup2(fderr, 2);
+            close(fderr);
+
+        } else {
+            dup2(fpipes[0], 0);
+            dup2(fpipes[1], 1);
+            close(fpipes[0]);
+            close(fpipes[1]);
         }
-        dup2(fderr, 2);
-        close(fderr);
-
         int pid = fork();
         if (pid == -1) {
             perror("fork");
@@ -241,7 +251,7 @@ SimpleCommand *Command::_currentSimpleCommand;
 
 int yyparse();
 
-void signalHandler( int signum ) {
+void signalHandler(int signum) {
     Command::_currentCommand.clear();
 
     printf("\n");
@@ -254,9 +264,10 @@ void handleChildDeath(int sigchild) { // Funeral
     int log = open("logs.txt", O_WRONLY | O_CREAT | O_APPEND, 0666); // Sus
     dup2(log, 1);
 
-    SimpleCommand* lastCommand = Command::_currentCommand._simpleCommands[Command::_currentCommand._numberOfSimpleCommands-1];
+    SimpleCommand *lastCommand = Command::_currentCommand._simpleCommands[
+            Command::_currentCommand._numberOfSimpleCommands - 1];
 
-    for(int i=0; i<lastCommand->_numberOfArguments; i++) {
+    for (int i = 0; i < lastCommand->_numberOfArguments; i++) {
         std::cout << lastCommand->_arguments[i] << " ";
     }
     std::cout << std::endl;

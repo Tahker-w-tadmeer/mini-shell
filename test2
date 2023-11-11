@@ -11,6 +11,7 @@ shell
 shell.l
 shell.y
 test
+test2
 y.tab.c
 y.tab.h
 y.tab.o
