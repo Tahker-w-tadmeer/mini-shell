@@ -151,10 +151,9 @@ void Command::execute() {
     char *output = getFullPath(_outFile);
     char *error = getFullPath(_errFile);
 
+    fdin = dup(default_in);
     if (input[0] != '\0') {
         fdin = open(input, O_RDONLY);
-    } else {
-        fdin = dup(default_in);
     }
 
     for (int i = 0; i < _numberOfSimpleCommands; i++) {
@@ -180,11 +179,6 @@ void Command::execute() {
             getcwd(working_dir, sizeof(working_dir));
             continue;
         }
-
-        dup2(fdin, 0);
-        close(fdin);
-
-
 
         dup2(fdin, 0);
         close(fdin);
