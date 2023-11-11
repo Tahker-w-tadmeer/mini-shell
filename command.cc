@@ -40,8 +40,6 @@ Command::Command() {
     _simpleCommands = (SimpleCommand **)
             malloc(_numberOfSimpleCommands * sizeof(SimpleCommand *));
 
-    _availableCommands = (std::string *) malloc(_numberOfSimpleCommands * sizeof(std::string));
-
     _numberOfSimpleCommands = 0;
     _outFile = nullptr;
     _inputFile = nullptr;
@@ -174,12 +172,12 @@ void Command::execute() {
 
             getcwd(working_dir, sizeof(working_dir));
             finishExecuting(default_in, default_out, default_err);
-            return;
+            continue;
         }
 
         int fdin = dup(default_in);
-        int fdout = dup(default_out);
-        int fderr = dup(default_err);
+        int fdout = dup(1);
+        int fderr = dup(2);
         int fpipes[2];
 
         // pipe command to pass data between processes it returns two file descriptors
@@ -193,21 +191,18 @@ void Command::execute() {
         }
         dup2(fdin, 0);
         close(fdin);
-        int p = pipe(fpipes);
-        if (p == -1) {
-            perror("pipe");
-            exit(1);
-        }
-        if (i == _numberOfSimpleCommands - 1) {
-            //in case of single greater than sign it will overwrite the output file
-            if (output[0] != '\0') {
-                int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 
-                fdout = open(output, mode, 0666);
-                _append = 0;
-            }
-            dup2(fdout, 1);
-            close(fdout);
+        //in case of single greater than sign it will overwrite the output file
+        if (output[0] != '\0') {
+            int mode = _append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
+
+            fdout = open(output, mode, 0666);
+            _append = 0;
+        }
+        dup2(fdout, 1);
+        close(fdout);
+
+        if (i == _numberOfSimpleCommands - 1) {
 
             //in case of double greater than sign it will overwrite the error file
             if (error[0] != '\0') {
@@ -217,6 +212,11 @@ void Command::execute() {
             close(fderr);
 
         } else {
+            if (pipe(fpipes) == -1) {
+                perror("pipe");
+                exit(1);
+            }
+
             dup2(fpipes[0], 0);
             dup2(fpipes[1], 1);
             close(fpipes[0]);

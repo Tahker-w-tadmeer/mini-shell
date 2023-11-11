@@ -1,5 +1,11 @@
+clear 
 ls 
-ls >test2 
 ls 
-cat test2 
-grep hh 
+ls 
+clear 
+cat test 
+cat test 
+grep shell 
+
+
+

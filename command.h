@@ -26,7 +26,6 @@ struct Command {
 	char * _errFile;
 	int _background;
     int _append;
-    std::string *_availableCommands;
 
 	static void prompt();
 	void print() const;
