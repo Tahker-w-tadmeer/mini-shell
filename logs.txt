@@ -1,11 +1,4 @@
-<<<<<<< HEAD
-ls 
-ls -al 
-cat out 
-grep shell 
-=======
 clear 
 ls 
->>>>>>> 6f79a6d (start handling pipe)
 grep shell 
 exir 
