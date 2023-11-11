@@ -181,11 +181,20 @@ void Command::execute() {
             continue;
         }
 
-//        if (strcasecmp(cmd, "echo") == 0) {
-//
-//
-//            continue;
-//        }
+        if (strcasecmp(cmd, "echo") == 0) {
+            pid = fork();
+            if (pid == 0) {
+                char *command = new char[sizeof(_simpleCommands[i]->_arguments[0]) +
+                                         sizeof(_simpleCommands[i]->_arguments[1]) + 1];
+                strcpy(command, _simpleCommands[i]->_arguments[0]);
+                strcat(command, " ");
+                strcat(command, _simpleCommands[i]->_arguments[1]);
+
+                execlp("/bin/sh", "sh", "-c", command, nullptr);
+            }
+
+            continue;
+        }
 
         dup2(fdin, 0);
         close(fdin);
@@ -243,7 +252,7 @@ void Command::execute() {
     dup2(default_out, 1);
     dup2(default_err, 2);
 
-    if (! _background) {
+    if (!_background) {
         waitpid(pid, 0, 0);
     }
 
