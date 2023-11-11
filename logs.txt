@@ -1,5 +1,12 @@
+clear 
+ls 
+ls 
+clear 
 grep shell 
-grep shell 
+
+
+
+
 
 
 
