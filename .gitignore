@@ -9,3 +9,4 @@ examples/ls_output
 examples/cat_grep.dSYM
 examples/cat_grep_output.dSYM
 examples/ls_output.dSYM
+logs.txt
