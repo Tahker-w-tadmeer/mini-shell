@@ -1,39 +1,23 @@
-total 704
-drwxrwxrwx@ 21 fadi  staff    672 Nov 11 00:13 .
-drwxr-xr-x   5 fadi  staff    160 Nov  9 11:05 ..
--rw-r--r--@  1 fadi  staff   6148 Nov  9 14:35 .DS_Store
-drwxr-xr-x  17 fadi  staff    544 Nov 11 00:04 .git
--rw-r--r--   1 fadi  staff    173 Nov 10 00:57 .gitignore
-drwxr-xr-x   6 fadi  staff    192 Nov 11 00:13 .idea
--rwxrwxrwx@  1 fadi  staff    337 Nov 10 23:55 Makefile
--rwxr-xr-x   1 fadi  staff   6736 Nov 11 00:13 command.cc
--rwxr-xr-x   1 fadi  staff    904 Nov 11 00:09 command.h
--rw-r--r--   1 fadi  staff  69432 Nov 11 00:13 command.o
-drwxrwxrwx@  6 fadi  staff    192 Nov  7 10:18 examples
--rw-r--r--   1 fadi  staff  45339 Nov 11 00:03 lex.yy.c
--rw-r--r--   1 fadi  staff  34632 Nov 11 00:03 lex.yy.o
--rw-r--r--   1 fadi  staff     14 Nov  7 10:02 readme.md
--rwxr-xr-x   1 fadi  staff  76936 Nov 11 00:13 shell
--rwxr-xr-x   1 fadi  staff    519 Nov 10 20:34 shell.l
--rwxr-xr-x   1 fadi  staff   1812 Nov 10 23:53 shell.y
--rw-r--r--   1 fadi  staff      0 Nov 11 00:13 test
--rw-r--r--   1 fadi  staff  44451 Nov 11 00:03 y.tab.c
--rw-r--r--   1 fadi  staff   2491 Nov 11 00:03 y.tab.h
--rw-r--r--   1 fadi  staff  33376 Nov 11 00:03 y.tab.o
-examples/:
-total 32
-drwxrwxrwx@  6 fadi  staff   192 Nov  7 10:18 .
-drwxrwxrwx@ 22 fadi  staff   704 Nov 11 00:15 ..
--rwxrwxrwx@  1 fadi  staff   350 Nov  7 10:18 Makefile
--rwxrwxrwx@  1 fadi  staff  3401 Nov  7 10:16 cat_grep.cc
--rwxrwxrwx@  1 fadi  staff  3885 Oct 20  2022 cat_grep_output.cc
--rwxrwxrwx@  1 fadi  staff  2112 Oct 20  2022 ls_output.cc
-
-examples2/:
-total 32
-drwxr-xr-x   6 fadi  staff   192 Nov 11 00:15 .
-drwxrwxrwx@ 22 fadi  staff   704 Nov 11 00:15 ..
--rwxr-xr-x   1 fadi  staff   350 Nov  7 10:18 Makefile
--rwxr-xr-x   1 fadi  staff  3401 Nov  7 10:16 cat_grep.cc
--rwxr-xr-x   1 fadi  staff  3885 Oct 20  2022 cat_grep_output.cc
--rwxr-xr-x   1 fadi  staff  2112 Oct 20  2022 ls_output.cc
+total 824
+drwxrwxrwx@ 22 fadi  staff     704 Nov 11 01:39 .
+drwxr-xr-x   5 fadi  staff     160 Nov  9 11:05 ..
+-rw-r--r--@  1 fadi  staff    6148 Nov  9 14:35 .DS_Store
+drwxr-xr-x  17 fadi  staff     544 Nov 11 00:20 .git
+-rw-r--r--   1 fadi  staff     173 Nov 10 00:57 .gitignore
+drwxr-xr-x   6 fadi  staff     192 Nov 11 01:39 .idea
+-rwxrwxrwx@  1 fadi  staff     337 Nov 10 23:55 Makefile
+-rwxr-xr-x   1 fadi  staff    7466 Nov 11 01:39 command.cc
+-rwxr-xr-x   1 fadi  staff     904 Nov 11 00:09 command.h
+-rw-r--r--   1 fadi  staff  114024 Nov 11 01:39 command.o
+drwxrwxrwx@  6 fadi  staff     192 Nov  7 10:18 examples
+-rw-r--r--   1 fadi  staff   45339 Nov 11 01:02 lex.yy.c
+-rw-r--r--   1 fadi  staff   34632 Nov 11 01:02 lex.yy.o
+-rw-r--r--   1 fadi  staff      26 Nov 11 01:39 logs.txt
+-rw-r--r--   1 fadi  staff      14 Nov  7 10:02 readme.md
+-rwxr-xr-x   1 fadi  staff   86680 Nov 11 01:39 shell
+-rwxr-xr-x   1 fadi  staff     519 Nov 10 20:34 shell.l
+-rwxr-xr-x   1 fadi  staff    1930 Nov 11 01:13 shell.y
+-rw-r--r--   1 fadi  staff       0 Nov 11 01:40 test
+-rw-r--r--   1 fadi  staff   44893 Nov 11 01:13 y.tab.c
+-rw-r--r--   1 fadi  staff    2491 Nov 11 01:13 y.tab.h
+-rw-r--r--   1 fadi  staff   33440 Nov 11 01:13 y.tab.o

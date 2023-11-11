@@ -27,7 +27,8 @@ goal:
 
 commands:
 	command
-	| commands  command
+	| commands command
+	| commands PIPE command
 	;
 
 command: simple_command
@@ -36,12 +37,13 @@ command: simple_command
 
     ;
 
-
-
 simple_command:
 	command_and_args error_opt NEWLINE {
 		Command::_currentCommand.execute();
 	}
+    | command_and_args BG error_opt NEWLINE {
+        Command::_currentCommand.execute();
+    }
 	| NEWLINE
 	| error NEWLINE { yyerrok; }
 	;
@@ -61,6 +63,10 @@ command_and_args:
 		Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
 	}
 	|
+    command_and_args PIPE command_word arg_list {
+        Command::_currentCommand.insertSimpleCommand(Command::_currentSimpleCommand);
+    }
+    |
 	;
 
 
